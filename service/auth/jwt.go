@@ -65,6 +65,43 @@ func WithJWTAuth(handlerFunc http.HandlerFunc, store types.UserStore) http.Handl
 	}
 }
 
+func WithJWTAuthAdmin(handlerFunc http.HandlerFunc, store types.UserStore) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		tokenString := getTokenFromRequest(r)
+
+		token, err := validateToken(tokenString)
+		if err != nil {
+			log.Printf("failed to validate token: %v", err)
+			permissionDenied(w)
+			return
+		}
+
+		if !token.Valid {
+			log.Printf("invalid token")
+			permissionDenied(w)
+			return
+		}
+
+		claims := token.Claims.(jwt.MapClaims)
+		str := claims["userID"].(string)
+
+		userID, _ := strconv.Atoi(str)
+
+		u, err := store.GetUserByIDAndRole(userID, "admin")
+		if err != nil {
+			log.Printf("failed to get user by id: %v", err)
+			permissionDenied(w)
+			return
+		}
+
+		ctx := r.Context()
+		ctx = context.WithValue(ctx, UserKey, u.ID)
+		r = r.WithContext(ctx)
+
+		handlerFunc(w, r)
+	}
+}
+
 func getTokenFromRequest(r *http.Request) string {
 	return r.Header.Get("Authorization")
 }

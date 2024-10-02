@@ -3,22 +3,24 @@ package product
 import (
 	"net/http"
 
+	"github.com/ardhptr21/ecomgo/service/auth"
 	"github.com/ardhptr21/ecomgo/types"
 	"github.com/ardhptr21/ecomgo/utils"
 	"github.com/gorilla/mux"
 )
 
 type Handler struct {
-	store types.ProductStore
+	store     types.ProductStore
+	userStore types.UserStore
 }
 
-func NewHandler(store types.ProductStore) *Handler {
-	return &Handler{store}
+func NewHandler(store types.ProductStore, userStore types.UserStore) *Handler {
+	return &Handler{store, userStore}
 }
 
 func (h *Handler) RegisterRoutes(router *mux.Router) {
 	router.HandleFunc("/products", h.handleGetProducts).Methods(http.MethodGet)
-	router.HandleFunc("/products", h.handleCreateProduct).Methods(http.MethodPost)
+	router.HandleFunc("/products", auth.WithJWTAuthAdmin(h.handleCreateProduct, h.userStore)).Methods(http.MethodPost)
 }
 
 func (h *Handler) handleGetProducts(w http.ResponseWriter, r *http.Request) {

@@ -7,6 +7,7 @@ import (
 type UserStore interface {
 	GetUserByEmail(email string) (*User, error)
 	GetUserByID(id int) (*User, error)
+	GetUserByIDAndRole(id int, role string) (*User, error)
 	CreateUser(RegisterUserPayload) error
 }
 
@@ -28,6 +29,7 @@ type User struct {
 	LastName  string    `json:"lastName"`
 	Email     string    `json:"email"`
 	Password  string    `json:"password"`
+	Role      string    `json:"role"`
 	CreatedAt time.Time `json:"createdAt"`
 }
 
